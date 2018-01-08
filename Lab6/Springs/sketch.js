@@ -1,102 +1,106 @@
-// Spring drawing constants for top bar
-var springHeight = 32,
-    left,
-    right,
-    maxHeight = 200,
-    minHeight = 100,
-    over = false,
-    move = false;
-
-// Spring simulation constants
-var M = 0.8,  // Mass
-    K = 0.8,  // Spring constant
-    D = 0.92, // Damping
-    R = 150;  // Rest position
-
-// Spring simulation variables
-var ps = R,   // Position
-    vs = 0.0, // Velocity
-    as = 0,   // Acceleration
-    f = 0;    // Force
-
-//var M,K,D,R,vs,as,f;
-//var ps = R;
+var spring1;
+var spring2;
 
 function setup() {
   createCanvas(710, 400);
+    
+    spring1 = new Spring(32,width/2-100,width/2+100,200,100,false,false,0.8,0.8,0.92,150,0.0,0,0,-110);
+    
+    spring2 = new Spring(32,width/2-100,width/2+100,200,100,false,false,0.9,0.7,0.62,110,0.0,0,0,110);
+    
   rectMode(CORNERS);
   noStroke();
-  left = width/2 - 100;
-  right = width/2 + 100;
 }
 
 function draw() {
   background(102);
-    defineSpring(0.8,0.8,0.92,100,0.0,0,0);
-  updateSpring();
-  drawSpring();
+    spring1.update();
+    spring1.draw();
+    
+    spring2.update();
+    spring2.draw();
 }
 
-function defineSpring(M_,K_,D_,R_,vs_,as_,f_){
-    M = M_;
-    K = K_;
-    D = D_;
-    R = R_;
-    vs = vs_;
-    as = as_;
-    f = f_;
-    console.log("R: " +R);
+class Spring {
+    constructor(springHeight,left,right,maxHeight,minHeight,
+    over,move,M,K,D,R,vs,as,f,pos){
+        
+        this.springHeight=springHeight;
+        this.left=left;
+        this.right=right;
+        this.maxHeight=maxHeight;
+        this.minHeight=minHeight;
+        this.over=over;
+        this.move=move;
+        this.pos=pos;
+        this.M=M;
+        this.K=K;
+        this.D=D;
+        this.R=R;
+        this.ps = this.R;
+        this.vs=vs;
+        this.as=as;
+        this.f=f;
+        this.baseWidth;
+    }
+
+    draw(){
+    // Draw base
+    fill(0.2);
+    this.baseWidth = 0.5 * this.ps + -8;
+    rect(width/2 - this.baseWidth+this.pos, this.ps + this.springHeight, width/2 + this.baseWidth+this.pos, height);
+
+    // Set color and draw top bar
+    if (this.over || this.move) {
+      fill(255);
+      } else {
+      fill(204);
+      }
+
+      rect(this.left+this.pos, this.ps, this.right+this.pos, this.ps + this.springHeight);
+    }
+
+    update(){
+    // Update the spring position
+      if ( !this.move ) {
+        this.f = -this.K * ( this.ps - this.R ); // f=-ky
+        this.as = this.f / this.M;          // Set the acceleration, f=ma == a=f/m
+        this.vs = this.D * (this.vs + this.as);  // Set the velocity
+        this.ps = this.ps + this.vs;        // Updated position
+      }
+
+      if (abs(this.vs) < 0.1) {
+        this.vs = 0.0;
+      }
+
+      // Test if mouse if over the top bar
+      if (mouseX > this.left+this.pos && mouseX < this.right+this.pos && mouseY > this.ps && mouseY < this.ps + this.springHeight) {
+        this.over = true;
+      } else {
+        this.over = false;
+      }
+
+      // Set and constrain the position of top bar
+      if (this.move) {
+        this.ps = mouseY - this.springHeight/2;
+        this.ps = constrain(this.ps, this.minHeight, this.maxHeight);
+      }
+    }
+    
 }
 
-function drawSpring() {
-  // Draw base
-  fill(0.2);
-  var baseWidth = 0.5 * ps + -8;
-  rect(width/2 - baseWidth, ps + springHeight, width/2 + baseWidth, height);
 
-  // Set color and draw top bar
-  if (over || move) {
-    fill(255);
-  } else {
-    fill(204);
-  }
-
-  rect(left, ps, right, ps + springHeight);
-}
-
-function updateSpring() {
-  // Update the spring position
-  if ( !move ) {
-    f = -K * ( ps - R ); // f=-ky
-    as = f / M;          // Set the acceleration, f=ma == a=f/m
-    vs = D * (vs + as);  // Set the velocity
-    ps = ps + vs;        // Updated position
-  }
-
-  if (abs(vs) < 0.1) {
-    vs = 0.0;
-  }
-
-  // Test if mouse if over the top bar
-  if (mouseX > left && mouseX < right && mouseY > ps && mouseY < ps + springHeight) {
-    over = true;
-  } else {
-    over = false;
-  }
-
-  // Set and constrain the position of top bar
-  if (move) {
-    ps = mouseY - springHeight/2;
-    ps = constrain(ps, minHeight, maxHeight);
-  }
-}
 
 function mousePressed() {
-  if (over) {
-    move = true;
+  if (spring1.over) {
+    spring1.move = true;
+  }
+  if (spring2.over) {
+    spring2.move = true;
   }
 }
 
 function mouseReleased() {
-  move = false;
+  spring1.move = false;
+  spring2.move = false;
 }
